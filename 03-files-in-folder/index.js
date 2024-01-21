@@ -21,7 +21,7 @@ fs.readdir(path.join(__dirname, dirname), (error, files) => {
             );
           }
         }
-      }); 
-    }); 
+      });
+    });
   }
 });
