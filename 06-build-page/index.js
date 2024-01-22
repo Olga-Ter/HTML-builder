@@ -9,8 +9,12 @@ const copyAssetsPath = path.join(projectDistPath, 'assets');
 const stylesPath = path.join(__dirname, 'styles');
 const templatePath = path.join(__dirname, 'template.html');
 const componentsPath = path.join(__dirname, 'components');
+const headerPath = path.join(componentsPath, 'header.html');
+const articlesPath = path.join(componentsPath, 'articles.html');
+const footerPath = path.join(componentsPath, 'footer.html');
 const stylesArr = [];
 let index = 0;
+let indexHtml = '';
 
 fs.mkdir(projectDistPath, { recursive: true }, (err) => {
   if (err) {
@@ -21,7 +25,8 @@ fs.mkdir(projectDistPath, { recursive: true }, (err) => {
         bundleHtmlFile();
         bundleCssFile();
       } else {
-        truncateHtmlCss(projectHtmlPath, projectCssPath);
+        bundleHtmlFile();
+        truncateCss(projectCssPath);
         createStyleCss(stylesPath, projectCssPath);
       }
     });
@@ -47,7 +52,7 @@ function bundleHtmlFile() {
     if (err) {
       console.log('Error for writing');
     } else {
-      //createIndexHtml();
+      createIndexHtml(projectHtmlPath);
     }
   });
 }
@@ -62,12 +67,7 @@ function bundleCssFile() {
   });
 }
 
-function truncateHtmlCss(htmlPath, cssPath) {
-  fs.truncate(htmlPath, (err) => {
-    if (err) {
-      console.log('Error: html file was not clear');
-    }
-  });
+function truncateCss(cssPath) {
   fs.truncate(cssPath, (err) => {
     if (err) {
       console.log('Error: css file was not clear');
@@ -152,6 +152,40 @@ function createStyleCss(cssPath, cssToPath) {
   });
 }
 
-//copyAssetsDir(assetsPath, copyAssetsPath);
-//clearAssetsDir(copyAssetsPath);
-//createStyleCss(stylesPath, projectCssPath);
+function createIndexHtml(HtmlPath) {
+  fs.readFile(templatePath, 'utf8', (error, data) => {
+    if (error) {
+      console.log('Error read temlate');
+    } else {
+      indexHtml = data;
+      fs.readFile(headerPath, 'utf8', (error, data) => {
+        if (error) {
+          console.log('Error header');
+        } else {
+          indexHtml = indexHtml.replace(/\{\{header\}\}/, data);
+          fs.readFile(articlesPath, 'utf8', (error, data) => {
+            if (error) {
+              console.log('Error articles');
+            } else {
+              indexHtml = indexHtml.replace(/\{\{articles\}\}/, data);
+              fs.readFile(footerPath, 'utf8', (error, data) => {
+                if (error) {
+                  console.log('Error footer');
+                } else {
+                  indexHtml = indexHtml.replace(/\{\{footer\}\}/, data);
+                  fs.writeFile(HtmlPath, indexHtml, (error) => {
+                    if (error) {
+                      console.log('Error write index.html');
+                    }
+                  });
+                }
+              });
+            }
+          });
+        }
+      });
+    }
+  });
+}
+
+
