@@ -6,10 +6,31 @@ const bundlePath = path.join(__dirname, 'project-dist');
 const stylesArr = [];
 let index = 0;
 
+fs.open(path.join(bundlePath, 'bundle.css'), 'a+', (err) => {
+  if (err) {
+    console.log('Error for writing');
+  } else {
+    fs.stat(path.join(bundlePath, 'bundle.css'), (error, stats) => {
+      if (error) {
+        console.log('Error stats file');
+      } else {
+        if (stats.size === 0) {
+          createBundleCss();
+        } else {
+          fs.truncate(path.join(bundlePath, 'bundle.css'), (err) => {
+            if (err) {
+              console.log('Error, file was not delete');
+            } else {
+              createBundleCss();
+            }
+          });
+        }
+      }
+    });
+  }
+});
+
 function createBundleCss() {
-  fs.open(path.join(bundlePath, 'bundle.css'), 'a+', (err) => {
-    if (err) console.log('Error for writing');
-  });
   fs.readdir(dirPath, (error, files) => {
     if (error) {
       console.log('Error of cheking  styles directory');
@@ -46,10 +67,10 @@ function createBundleCss() {
   });
 }
 
-fs.unlink(path.join(bundlePath, 'bundle.css'), (err) => {
-  if (err) {
-    console.log('Error! File was not deleted');
-  } else {
-    createBundleCss();
-  }
-});
+// fs.unlink(path.join(bundlePath, 'bundle.css'), (err) => {
+//   if (err) {
+//     console.log('Error! File was not deleted');
+//   } else {
+//     createBundleCss();
+//   }
+// });
