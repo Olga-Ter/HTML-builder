@@ -9,12 +9,17 @@ const copyAssetsPath = path.join(projectDistPath, 'assets');
 const stylesPath = path.join(__dirname, 'styles');
 const templatePath = path.join(__dirname, 'template.html');
 const componentsPath = path.join(__dirname, 'components');
-const headerPath = path.join(componentsPath, 'header.html');
-const articlesPath = path.join(componentsPath, 'articles.html');
-const footerPath = path.join(componentsPath, 'footer.html');
 const stylesArr = [];
 let index = 0;
 let indexHtml = '';
+
+// fs.access(copyAssetsPath, fs.constants.F_OK, (err) => {
+//   if (err) {
+//     return;
+//   } else {
+//     clearAssetsDir(copyAssetsPath);
+//   }
+// });
 
 fs.mkdir(projectDistPath, { recursive: true }, (err) => {
   if (err) {
@@ -24,24 +29,30 @@ fs.mkdir(projectDistPath, { recursive: true }, (err) => {
       if (err) {
         bundleHtmlFile();
         bundleCssFile();
+        fs.mkdir(copyAssetsPath, { recursive: true }, (err) => {
+          if (err) {
+            console.log('Error');
+          } else {
+            copyAssetsDir(assetsPath, copyAssetsPath);
+          }
+        });
       } else {
-        bundleHtmlFile();
-        truncateCss(projectCssPath);
-        createStyleCss(stylesPath, projectCssPath);
-      }
-    });
-  }
-});
-fs.mkdir(copyAssetsPath, { recursive: true }, (err) => {
-  if (err) {
-    console.log('Error');
-  } else {
-    fs.readdir(copyAssetsPath, (error, files) => {
-      if (error) {
-        console.log('Error: read newAssets dir');
-      } else {
-        if (files.length !== 0) clearAssetsDir(copyAssetsPath);
-        copyAssetsDir(assetsPath, copyAssetsPath);
+        fs.rm(copyAssetsPath, { recursive: true }, (err) => {
+          if (err) {
+            console.log('Error: dir was not delete');
+          } else {
+            bundleHtmlFile();
+            truncateCss(projectCssPath);
+            createStyleCss(stylesPath, projectCssPath);
+            fs.mkdir(copyAssetsPath, { recursive: true }, (err) => {
+              if (err) {
+                console.log('Error');
+              } else {
+                copyAssetsDir(assetsPath, copyAssetsPath);
+              }
+            });
+          }
+        });
       }
     });
   }
@@ -50,7 +61,7 @@ fs.mkdir(copyAssetsPath, { recursive: true }, (err) => {
 function bundleHtmlFile() {
   fs.open(projectHtmlPath, 'a+', (err) => {
     if (err) {
-      console.log('Error for writing');
+      console.log('Error for writing html');
     } else {
       createIndexHtml(projectHtmlPath);
     }
@@ -60,7 +71,7 @@ function bundleHtmlFile() {
 function bundleCssFile() {
   fs.open(projectCssPath, 'a+', (err) => {
     if (err) {
-      console.log('Error for writing');
+      console.log('Error for writing css');
     } else {
       createStyleCss(stylesPath, projectCssPath);
     }
@@ -158,23 +169,21 @@ function createIndexHtml(HtmlPath) {
       console.log('Error read temlate');
     } else {
       indexHtml = data;
-      fs.readFile(headerPath, 'utf8', (error, data) => {
+      fs.readdir(componentsPath, (error, files) => {
         if (error) {
-          console.log('Error header');
+          console.log('Error read components');
         } else {
-          indexHtml = indexHtml.replace(/\{\{header\}\}/, data);
-          fs.readFile(articlesPath, 'utf8', (error, data) => {
-            if (error) {
-              console.log('Error articles');
-            } else {
-              indexHtml = indexHtml.replace(/\{\{articles\}\}/, data);
-              fs.readFile(footerPath, 'utf8', (error, data) => {
+          files.forEach((file) => {
+            let filepath = path.join(componentsPath, file);
+            if (path.parse(filepath, file).ext.slice(1).toLowerCase() === 'html') {
+              let name = path.parse(filepath, file).name;
+              fs.readFile(filepath, 'utf8', (error, data) => {
                 if (error) {
-                  console.log('Error footer');
+                  console.log(`Error ${name} component`);
                 } else {
-                  indexHtml = indexHtml.replace(/\{\{footer\}\}/, data);
-                  fs.writeFile(HtmlPath, indexHtml, (error) => {
-                    if (error) {
+                  indexHtml = indexHtml.replace(new RegExp(`{{${name}}}`), data);
+                  fs.writeFile(HtmlPath, indexHtml, (err) => {
+                    if (err) {
                       console.log('Error write index.html');
                     }
                   });
@@ -188,4 +197,8 @@ function createIndexHtml(HtmlPath) {
   });
 }
 
-
+//copyAssetsDir(assetsPath, copyAssetsPath);
+//clearAssetsDir(copyAssetsPath);
+//createStyleCss(stylesPath, projectCssPath);
+//createIndexHtml(projectHtmlPath);
+//bundleHtmlFile();
